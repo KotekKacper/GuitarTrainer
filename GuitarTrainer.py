@@ -52,17 +52,38 @@ def slice(X, start, end):
     # Xslice -= Xslice[0]
     return Xslice
 
-def plotStem(y, expected=82, intrv=(0,-1), sr=2500):
-    c = abs(np.fft.fft(y))
+def noteClassification(values, expected, n, srate):
+    # indexes and values are mixed, they should be connected somehow
+    ind = np.argpartition(values[1:-n//2], -10)[-10:]
+    maximum = round(np.argmax(values[1:-n//2])/n * srate, 2)
+    
+    top10 = sorted([round(indx/n * srate, 2) for indx in ind])
+    print("Top 10: ", top10)
+
+    top10 = [value for value in top10 if value > 50.0]
+    last_value = top10[0]
+    peak_count = 1
+    peak_sum = top10[0]
+    for id in top10:
+        if id == last_value+5.0:
+            peak_count += 1
+            peak_sum += id
+    calculated = peak_sum/peak_count
+
+    print("Max          : ", maximum)
+    print("Calculated   : ", calculated)
+    print("Expected     : ", expected)
+    print()
+
+def plotStem(y, expected, srate=2500):
+    values = abs(np.fft.fft(y))
     n = len(y)
-    c = c/n * 2
-    freqs = np.linspace(0,sr,n)
+    values = values/n * 2
+    freqs = np.linspace(0,srate,n)
     
     plt.figure(figsize=(25, 5), dpi=100)
-    plt.stem(freqs[intrv[0]:intrv[1]], c[intrv[0]:intrv[1]])
+    plt.stem(freqs, values)
     plt.xticks(np.arange(0,2500,100))
     plt.show()
     
-    ind = np.argpartition(c[1:-n//2], -10)[-10:]
-    print("Top 10: ", *sorted([round(indx/n * sr, 2) for indx in ind]))
-    print("Expected", expected,'\n\n\n')
+    noteClassification(values, expected, n, srate)
