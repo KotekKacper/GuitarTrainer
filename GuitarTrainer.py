@@ -40,6 +40,7 @@ def readFile(filename):
     return data
 
 def plotRecording(y, start_point=0, end_point=-1):
+    plt.figure(figsize=(25, 5), dpi=100)
     plt.plot(y[start_point:end_point])
     plt.show()
 
@@ -54,13 +55,27 @@ def slice(X, start, end):
 
 def noteClassification(values, expected, n, srate):
     # indexes and values are mixed, they should be connected somehow
-    ind = np.argpartition(values[1:-n//2], -10)[-10:]
-    maximum = round(np.argmax(values[1:-n//2])/n * srate, 2)
-    
-    top10 = sorted([round(indx/n * srate, 2) for indx in ind])
-    print("Top 10: ", top10)
+    ind = np.argpartition(values[:-n//2], -10)[-10:]
+    top = {}
 
-    top10 = [value for value in top10 if value > 50.0]
+    for i in sorted(ind):
+        top[round(i/n*srate,2)] = values[i]
+        #print(i, i/n*srate, values[i])
+    avg = sum([top[v] for v in top])/len(top)
+    maximum = round(np.argmax(values[:-n//2])/n * srate, 2)
+
+    # cut values that are smaller than the average and not close to possible dominant frequency point
+    # no neighbours (-5.0 or +5.0)
+    to_del = []
+    for k in top:
+        if not (k+5.0 in top or k-5.0 in top) and top[k] < avg:
+            to_del.append(k)
+    
+    for el in to_del:
+        del top[el]
+    
+    top10 = [value for value in top if value > 50.0]
+    print(top10)
     last_value = top10[0]
     peak_count = 1
     peak_sum = top10[0]
@@ -68,8 +83,9 @@ def noteClassification(values, expected, n, srate):
         if id == last_value+5.0:
             peak_count += 1
             peak_sum += id
+            last_value+=5.0
     calculated = peak_sum/peak_count
-
+    
     print("Max          : ", maximum)
     print("Calculated   : ", calculated)
     print("Expected     : ", expected)
