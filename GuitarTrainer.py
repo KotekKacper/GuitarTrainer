@@ -121,3 +121,34 @@ def fillAllFrets(convertion):
             
 def giveFretFreqs(conv_file):
     return fillAllFrets(readConvertion(conv_file))
+
+def giveFretFreqIntervals(conv_file):
+    freqs = fillAllFrets(readConvertion(conv_file))
+    intervals = dict()
+    for k,v in freqs.items():
+        string, fret = k.split('.')
+        if k == "1.0":
+            linterv = "78"
+            rinterv = freqs[string+'.'+str(int(fret)+1)]
+        elif k == "6.19":
+            linterv = freqs[string+'.'+str(int(fret)-1)]
+            rinterv = "1100"
+        elif fret == '0':
+            if string == '5':
+                linterv = freqs[str(int(string)-1)+'.'+str(int(fret)+3)]
+                rinterv = freqs[string+'.'+str(int(fret)+1)]
+            else:
+                linterv = freqs[str(int(string)-1)+'.'+str(int(fret)+4)]
+                rinterv = freqs[string+'.'+str(int(fret)+1)]
+        elif fret == '19':
+            if string == '4':
+                linterv = freqs[string+'.'+str(int(fret)-1)]
+                rinterv = freqs[str(int(string)+1)+'.'+str(int(fret)-3)]
+            else:
+                linterv = freqs[string+'.'+str(int(fret)-1)]
+                rinterv = freqs[str(int(string)+1)+'.'+str(int(fret)-4)]
+        else:
+            linterv = freqs[string+'.'+str(int(fret)-1)]
+            rinterv = freqs[string+'.'+str(int(fret)+1)]
+        intervals[k] = (int(v)-(int(v)-int(linterv))/2, int(v)+(int(rinterv)-int(v))/2)
+    return intervals
