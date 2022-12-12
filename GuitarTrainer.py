@@ -3,6 +3,7 @@ from time import time
 from utils import getkey
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 
 def readingSerialDataToFile(filename, port_addr="/dev/ttyUSB0", baudrate=230400):
     try:
@@ -103,3 +104,20 @@ def plotStem(y, expected, srate=2500):
     plt.show()
     
     noteClassification(values, expected, n, srate)
+
+def readConvertion(filename):
+    return json.load(open(filename))["pos-to-freq"]
+
+def fillAllFrets(convertion):
+    for string in range(6,0,-1):
+        for fret in range(19,-1,-1):
+            comb = str(string)+"."+str(fret)
+            if comb not in convertion:
+                if string == 4:
+                    convertion[comb] = convertion[str(string+1)+"."+str(fret-4)]
+                else:
+                    convertion[comb] = convertion[str(string+1)+"."+str(fret-5)]
+    return convertion
+            
+def giveFretFreqs(conv_file):
+    return fillAllFrets(readConvertion(conv_file))
