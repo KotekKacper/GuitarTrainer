@@ -76,7 +76,8 @@ def noteClassification(values, expected, n, srate):
         del top[el]
     
     top10 = [value for value in top if value > 50.0]
-    print(top10)
+    if len(top10) < 1: top10 = [0]
+    # print(top10)
     last_value = top10[0]
     peak_count = 1
     peak_sum = top10[0]
@@ -87,10 +88,13 @@ def noteClassification(values, expected, n, srate):
             last_value+=5.0
     calculated = peak_sum/peak_count
     
-    print("Max          : ", maximum)
-    print("Calculated   : ", calculated)
-    print("Expected     : ", expected)
-    print()
+    if expected != 0:
+        print("Max          : ", maximum)
+        print("Calculated   : ", calculated)
+        print("Expected     : ", expected)
+        print()
+    
+    return calculated
 
 def plotStem(y, expected, srate=2500):
     values = abs(np.fft.fft(y))
@@ -104,6 +108,13 @@ def plotStem(y, expected, srate=2500):
     plt.show()
     
     noteClassification(values, expected, n, srate)
+
+def getNote(y, srate=2500):
+    values = abs(np.fft.fft(y))
+    n = len(y)
+    values = values/n * 2
+    return noteClassification(values, 0, n, srate)
+
 
 def readConvertion(filename):
     return json.load(open(filename))["pos-to-freq"]
