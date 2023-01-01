@@ -1,9 +1,10 @@
 import serial
-from time import time
+import time
 from utils import getkey
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+import vlc
 
 def readingSerialDataToFile(filename, port_addr="/dev/ttyUSB0", baudrate=230400):
     try:
@@ -163,3 +164,87 @@ def giveFretFreqIntervals(conv_file):
             rinterv = freqs[string+'.'+str(int(fret)+1)]
         intervals[k] = (int(v)-(int(v)-int(linterv))/2, int(v)+(int(rinterv)-int(v))/2)
     return intervals
+
+def readGTIN(filename):
+    tempo = 0
+    data = list()
+    with open(filename) as file:
+        for line in file:
+            line = line.rstrip()
+            # avoiding comments and blanks
+            if line.startswith('#') or line == '':
+                continue
+            if tempo == 0:
+                tempo = float(line)
+                continue
+
+            duration, note = line.split(' ')
+            data.append((duration, note))
+
+    return (tempo, data)
+
+def playGTIN(tempo, data):
+    full_note_dur = 4*(60/tempo)
+
+    for duration, note in data:
+        start = time.time()
+        duration = duration.split('/')
+        note = note.split('.')
+
+        print(note)
+        
+        display_time = full_note_dur*int(duration[0])/int(duration[1])
+        while(time.time()-start < display_time):
+            pass
+
+def generateTabs(data):
+    strings = {'1':[], '2':[], '3':[],
+             '4':[], '5':[], '6':[]}
+    for duration, note in data:
+        duration = duration.split('/')
+        note = note.split('.')
+
+        for string, fret in strings.items():
+            if string == note[0]:
+                fret.append(note[1])
+            else:
+                fret.append('-')
+        
+        for i in range(32*int(duration[0])//int(duration[1])-1):
+            for string, fret in strings.items():
+                fret.append('-')
+    
+    # for i in range(50, 1000):
+    #     print(strings['6'][i:i+20])
+    #     print(strings['5'][i:i+20])
+    #     print(strings['4'][i:i+20])
+    #     print(strings['3'][i:i+20])
+    #     print(strings['2'][i:i+20])
+    #     print(strings['1'][i:i+20])
+    #     time.sleep(0.1)
+
+    return strings
+    
+def playTabs(tabs, tempo, width=20):
+    full_note_dur = 4*(60/tempo)
+
+    for i in range(0,len(tabs['1'])-width):
+        start = time.time()
+        lines = list()
+        for string_nr in range(6,0,-1):
+            current = tabs[str(string_nr)][i:i+width]
+            lines.append(''.join(current))
+        print('\n'.join(lines))
+        while(time.time()-start < full_note_dur/32):
+            pass
+
+def playSong(filename):
+    music_file = vlc.MediaPlayer(filename)
+    music_file.play()
+
+if __name__ == "__main__":
+    tempo, data = readGTIN("./songs/DoIWannaKnow.gtin")
+    tabs = generateTabs(data)
+    playSong("./songs/DoIWannaKnow.mp3")
+    playTabs(tabs, tempo)
+    # playGTIN(tempo, data)
