@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 import vlc
+from os import walk
 
 def readingSerialDataToFile(filename, port_addr="/dev/ttyUSB0", baudrate=230400):
     try:
@@ -183,20 +184,6 @@ def readGTIN(filename):
 
     return (tempo, data)
 
-def playGTIN(tempo, data):
-    full_note_dur = 4*(60/tempo)
-
-    for duration, note in data:
-        start = time.time()
-        duration = duration.split('/')
-        note = note.split('.')
-
-        print(note)
-        
-        display_time = full_note_dur*int(duration[0])/int(duration[1])
-        while(time.time()-start < display_time):
-            pass
-
 def generateTabs(data):
     strings = {'1':[], '2':[], '3':[],
              '4':[], '5':[], '6':[]}
@@ -213,24 +200,23 @@ def generateTabs(data):
         for i in range(32*int(duration[0])//int(duration[1])-1):
             for string, fret in strings.items():
                 fret.append('-')
-    
-    # for i in range(50, 1000):
-    #     print(strings['6'][i:i+20])
-    #     print(strings['5'][i:i+20])
-    #     print(strings['4'][i:i+20])
-    #     print(strings['3'][i:i+20])
-    #     print(strings['2'][i:i+20])
-    #     print(strings['1'][i:i+20])
-    #     time.sleep(0.1)
 
     return strings
     
 def playTabs(tabs, tempo, width=21):
     full_note_dur = 4*(60/tempo)
+    score = 50
+    correct_note = True
 
     for i in range(0,len(tabs['1'])-width):
         start = time.time()
         lines = list()
+
+        # score line
+        if correct_note:
+            lines.append("GOOD! :)   SCORE: "+str(int(score))+'%')
+        else:
+            lines.append("MISS  :(   SCORE: "+str(int(score))+'%')
 
         # progress bar
         curr_progress = i/(len(tabs['1'])-width)
@@ -245,15 +231,49 @@ def playTabs(tabs, tempo, width=21):
 
         print('\n'.join(lines))
         while(time.time()-start < full_note_dur/32):
+            #TODO - here check if correct note was detected
             pass
 
-def playSong(filename):
+def playSong(filename, speed):
     music_file = vlc.MediaPlayer(filename)
+    music_file.set_rate(speed)
     music_file.play()
 
+def listSongs(path, songfile_end):
+     songnames = next(walk(path), (None, None, []))[2]
+     return [i[:-4] for i in songnames if i.endswith(songfile_end)]
+
+def finishScreen():
+    pass
+
+def menu(width=21, songpath="./songs", tabfile_end=".gtin", songfile_end=".mp3"):
+    submenu = 1 # 1-play 2-choose_song 3-choose_speed
+    speed = 1.0 # 0.5 - 2.0
+    songnames = listSongs(songpath, songfile_end)
+    song = songnames[0]
+
+    while True:
+        if submenu == 1:
+            print("Play")
+
+            input()
+
+            tempo, data = readGTIN(songpath+'/'+song+tabfile_end)
+            tabs = generateTabs(data)
+            playSong(songpath+'/'+song+songfile_end, speed)
+            playTabs(tabs, tempo*speed)
+
+            finishScreen()
+
+        elif submenu == 2:
+            print(song)
+        elif submenu == 3:
+            print(speed)
+
+
 if __name__ == "__main__":
-    tempo, data = readGTIN("./songs/DoIWannaKnow.gtin")
-    tabs = generateTabs(data)
-    playSong("./songs/DoIWannaKnow.mp3")
-    playTabs(tabs, tempo)
-    # playGTIN(tempo, data)
+    
+
+    menu()
+
+    
