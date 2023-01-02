@@ -203,20 +203,32 @@ def generateTabs(data):
 
     return strings
     
-def playTabs(tabs, tempo, width=21):
+def playTabs(tabs, tempo, width=21, margin_of_error=2):
+    intervals = giveFretFreqIntervals("convertion.json")
     full_note_dur = 4*(60/tempo)
-    score = 50
+    hit = 0
+    miss = 0
+    score = 0
     correct_note = True
+    notes_to_hit = list()
 
     for i in range(0,len(tabs['1'])-width):
         start = time.time()
         lines = list()
 
         # score line
+        before = len(notes_to_hit)
+        notes_to_hit = [[note, place-1] for note, place in notes_to_hit if place > 0-margin_of_error]
+        after = len(notes_to_hit)
+        if before>after:
+            correct_note = False
+            miss += before-after
+        if hit+miss > 0:
+            score = int(hit/(hit+miss)*100)
         if correct_note:
-            lines.append("GOOD! :)   SCORE: "+str(int(score))+'%')
+            lines.append("GOOD! :)   SCORE: "+str(int(score)).zfill(2)+'%')
         else:
-            lines.append("MISS  :(   SCORE: "+str(int(score))+'%')
+            lines.append("MISS  :(   SCORE: "+str(int(score)).zfill(2)+'%')
 
         # progress bar
         curr_progress = i/(len(tabs['1'])-width)
@@ -229,10 +241,23 @@ def playTabs(tabs, tempo, width=21):
             current = tabs[str(string_nr)][i:i+width]
             lines.append(''.join(current))
 
+            if current[-1] != '-':
+                notes_to_hit.append([str(string_nr)+'.'+current[-1], width-1])
+
         print('\n'.join(lines))
+
         while(time.time()-start < full_note_dur/32):
             #TODO - here check if correct note was detected
-            pass
+            played = 87 # replace with the detected frequency
+
+            to_play = [intervals[note] for note, place in notes_to_hit if place <= margin_of_error]
+
+            for i, (linterv, rinterv) in enumerate(to_play):
+                if played > linterv and played < rinterv:
+                    hit += 1
+                    notes_to_hit = notes_to_hit[i+1:]
+                    correct_note = True
+
 
 def playSong(filename, speed):
     music_file = vlc.MediaPlayer(filename)
@@ -256,12 +281,11 @@ def menu(width=21, songpath="./songs", tabfile_end=".gtin", songfile_end=".mp3")
         if submenu == 1:
             print("Play")
 
-            input()
-
-            tempo, data = readGTIN(songpath+'/'+song+tabfile_end)
-            tabs = generateTabs(data)
-            playSong(songpath+'/'+song+songfile_end, speed)
-            playTabs(tabs, tempo*speed)
+            if (input() == 'p'):
+                tempo, data = readGTIN(songpath+'/'+song+tabfile_end)
+                tabs = generateTabs(data)
+                playSong(songpath+'/'+song+songfile_end, speed)
+                playTabs(tabs, tempo*speed)
 
             finishScreen()
 
@@ -272,8 +296,4 @@ def menu(width=21, songpath="./songs", tabfile_end=".gtin", songfile_end=".mp3")
 
 
 if __name__ == "__main__":
-    
-
     menu()
-
-    
