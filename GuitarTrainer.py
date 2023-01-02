@@ -257,6 +257,8 @@ def playTabs(tabs, tempo, width=21, margin_of_error=2):
                     hit += 1
                     notes_to_hit = notes_to_hit[i+1:]
                     correct_note = True
+    
+    return score
 
 
 def playSong(filename, speed):
@@ -268,7 +270,7 @@ def listSongs(path, songfile_end):
      songnames = next(walk(path), (None, None, []))[2]
      return [i[:-4] for i in songnames if i.endswith(songfile_end)]
 
-def finishScreen():
+def finishScreen(score):
     pass
 
 def menu(width=21, songpath="./songs", tabfile_end=".gtin", songfile_end=".mp3"):
@@ -285,9 +287,8 @@ def menu(width=21, songpath="./songs", tabfile_end=".gtin", songfile_end=".mp3")
                 tempo, data = readGTIN(songpath+'/'+song+tabfile_end)
                 tabs = generateTabs(data)
                 playSong(songpath+'/'+song+songfile_end, speed)
-                playTabs(tabs, tempo*speed)
-
-            finishScreen()
+                score = playTabs(tabs, tempo*speed)
+                finishScreen(score)
 
         elif submenu == 2:
             print(song)
