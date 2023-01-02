@@ -271,7 +271,9 @@ def listSongs(path, songfile_end):
      return [i[:-4] for i in songnames if i.endswith(songfile_end)]
 
 def finishScreen(score):
-    pass
+    print("Final score:")
+    print(str(int(score)).zfill(2)+'%')
+    input()
 
 def menu(width=21, songpath="./songs", tabfile_end=".gtin", songfile_end=".mp3"):
     submenu = 1 # 1-play 2-choose_song 3-choose_speed
@@ -282,18 +284,41 @@ def menu(width=21, songpath="./songs", tabfile_end=".gtin", songfile_end=".mp3")
     while True:
         if submenu == 1:
             print("Play")
+            inp = input()
 
-            if (input() == 'p'):
+            if inp == 'y':
                 tempo, data = readGTIN(songpath+'/'+song+tabfile_end)
                 tabs = generateTabs(data)
                 playSong(songpath+'/'+song+songfile_end, speed)
                 score = playTabs(tabs, tempo*speed)
                 finishScreen(score)
+            elif inp == 'l':
+                submenu = 3
+            elif inp == 'r':
+                submenu = 2
 
         elif submenu == 2:
-            print(song)
+            print("Choose song")
+            inp = input()
+
+            if inp == 'y':
+                print(song)
+            elif inp == 'l':
+                submenu = 1
+            elif inp == 'r':
+                submenu = 3
+
         elif submenu == 3:
-            print(speed)
+            print("Choose speed")
+            inp = input()
+
+            if inp == 'y':
+                print(speed)
+            elif inp == 'l':
+                submenu = 2
+            elif inp == 'r':
+                submenu = 1
+
 
 
 if __name__ == "__main__":
