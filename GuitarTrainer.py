@@ -225,15 +225,24 @@ def generateTabs(data):
 
     return strings
     
-def playTabs(tabs, tempo, width=20):
+def playTabs(tabs, tempo, width=21):
     full_note_dur = 4*(60/tempo)
 
     for i in range(0,len(tabs['1'])-width):
         start = time.time()
         lines = list()
+
+        # progress bar
+        curr_progress = i/(len(tabs['1'])-width)
+        progress_signs = int(curr_progress*(width-2))+1
+        lines.append('[' + '*'*progress_signs +
+                     ' '*(width-2-progress_signs) + ']')
+
+        # tabs
         for string_nr in range(6,0,-1):
             current = tabs[str(string_nr)][i:i+width]
             lines.append(''.join(current))
+
         print('\n'.join(lines))
         while(time.time()-start < full_note_dur/32):
             pass
